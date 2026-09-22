@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local Kafka broker data and the ingest resume position
+.kafka-data/
+.state/
+logs/
+
+# Connector jars are fetched by scripts/fetch-connectors.sh, not committed
+lib/*.jar
+
+# macOS
+.DS_Store
