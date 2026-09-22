@@ -1,0 +1,49 @@
+# Single source of truth for the stream. Every value is overridable with a
+# WES_* environment variable (see ingest/config.py).
+
+source:
+  # Wikimedia's public firehose of every edit across every wiki. No auth,
+  # no rate limit, genuinely unbounded - which is the point.
+  url: https://stream.wikimedia.org/v2/stream/recentchange
+  user_agent: wiki-edit-stream/0.1 (github.com/urazalievf/wiki-edit-stream)
+  # Resume position is persisted here so a restart does not replay from now,
+  # losing whatever arrived while the process was down.
+  offset_file: .state/last-event-id.json
+  connect_timeout_s: 10
+  read_timeout_s: 60
+  # Reconnect backoff, capped. The server also suggests one via `retry:`.
+  backoff_initial_s: 1
+  backoff_max_s: 60
+
+kafka:
+  bootstrap_servers: 127.0.0.1:9092
+  producer:
+    # Idempotent + acks=all: a retry after a network blip must not duplicate
+    # the record. This is the cheap half of end-to-end exactly-once.
+    enable.idempotence: true
+    acks: all
+    compression.type: zstd
+    linger.ms: 50
+    batch.size: 65536
+    max.in.flight.requests.per.connection: 5
+    retries: 2147483647
+    delivery.timeout.ms: 120000
+
+topics:
+  raw: wiki.edits.raw
+  clean: wiki.edits.clean
+  dlq: wiki.edits.dlq
+  stats: wiki.stats.per_wiki_1m
+  alerts: wiki.alerts.edit_wars
+  partitions: 3
+  replication: 1
+
+flink:
+  parallelism: 2
+  checkpoint_interval_ms: 10000
+  # Aligned to the watermark strategy below: events arriving later than this
+  # are counted as late rather than silently folded into the wrong window.
+  max_out_of_orderness_s: 15
+  # Rendered as INTERVAL '<n>' MINUTE - the unit is fixed in the SQL so a
+  # config value can never produce invalid syntax.
+  window_minutes: 1

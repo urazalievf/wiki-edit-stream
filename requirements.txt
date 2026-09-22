@@ -1,0 +1,27 @@
+# PyFlink 2.2 pins apache-beam<=2.61, whose wheels are unavailable on recent
+# Python/arm64. Beam is only used to run Python UDFs out of process; these
+# jobs are pure SQL, so it is installed with --no-deps and never imported.
+# See README "Why apache-beam is not installed".
+apache-flink==2.2.0
+apache-flink-libraries==2.2.0
+
+confluent-kafka==2.6.0
+requests>=2.32
+PyYAML>=6.0
+
+# PyFlink runtime dependencies, declared explicitly because apache-flink is
+# installed with --no-deps.
+py4j==0.10.9.7
+cloudpickle>=2.2.0
+pandas<2.3
+pyarrow<21.0.0
+numpy>=1.22.4
+protobuf>=3.19.0
+python-dateutil>=2.8.0
+pytz>=2018.3
+fastavro>=1.1.0
+avro>=1.12.0
+httplib2>=0.19.0
+ruamel.yaml>=0.18.4
+typing_extensions>=4.0
+pemja>=0.5.7,<0.5.8; platform_system != "Windows"
